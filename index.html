@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>知識島闖關王</title>
+<style>
+:root{--ink:#1d2b3a;--bg:#d8f0e6;--card:#fffdf5;--coral:#ff6b5b;--sun:#ffc83d;--leaf:#2fbf82;--sky:#6ec1ff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;color:var(--ink);
+  background:var(--bg) radial-gradient(circle at 1px 1px,rgba(29,43,58,.12) 1.5px,transparent 0) 0 0/18px 18px}
+#app{max-width:480px;margin:0 auto;padding:0 16px}
+.screen{display:none;min-height:100dvh;padding:calc(18px + env(safe-area-inset-top)) 0 calc(18px + env(safe-area-inset-bottom));flex-direction:column;gap:12px}
+.screen.active{display:flex}
+h1,h2,h3,p{margin:0}
+.card{background:var(--card);border:3px solid var(--ink);border-radius:20px;box-shadow:0 5px 0 var(--ink);padding:16px}
+.btn{font:inherit;font-weight:800;font-size:18px;color:var(--ink);background:var(--sun);border:3px solid var(--ink);border-radius:16px;
+  padding:13px;box-shadow:0 5px 0 var(--ink);cursor:pointer;transition:transform .08s,box-shadow .08s;width:100%}
+.btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}
+.btn.sky{background:var(--sky)}.btn.white{background:#fff}.btn.coral{background:var(--coral);color:#fff}.btn.leaf{background:var(--leaf);color:#fff}
+.btn.small{font-size:15px;padding:8px 12px;width:auto}
+.btn:disabled{cursor:default;opacity:.55}
+.row{display:flex;gap:10px;align-items:center}
+.row>*{flex:1}
+.between>*{flex:none}
+.between{justify-content:space-between}
+.cn{display:inline-block;width:.95em;height:.95em;border-radius:50%;background:var(--sun);border:2px solid var(--ink);box-shadow:inset 0 0 0 2px #fff7;vertical-align:-.12em}
+.coin{font-weight:800;background:#fff;border:3px solid var(--ink);border-radius:999px;padding:4px 12px}
+
+/* 首頁 */
+#home{justify-content:center}
+.title{text-align:center;cursor:pointer;user-select:none;padding:6px 0}
+.title .mark{font-size:60px;display:inline-block;transition:transform .15s}
+.title .mark.pop{transform:scale(1.35) rotate(-12deg)}
+.title h1{font-size:44px;line-height:1.1;letter-spacing:2px}
+.tag{display:inline-block;background:var(--coral);color:#fff;font-weight:800;border:3px solid var(--ink);border-radius:12px;padding:2px 12px;transform:rotate(-3deg);margin-top:8px}
+.seg{display:flex;gap:8px;margin-top:10px}
+.seg button{font:inherit;font-weight:800;flex:1;padding:10px 4px;border:3px solid var(--ink);border-radius:14px;background:#fff;color:var(--ink);cursor:pointer}
+.seg button.on{background:var(--ink);color:#fff}
+.seg button.lock{opacity:.45}
+.seg small{display:block;font-weight:600;font-size:12px;opacity:.8}
+
+/* 遊戲 */
+.hud{display:flex;justify-content:space-between;align-items:center;font-weight:800}
+.hearts{font-size:20px;letter-spacing:1px}
+.bar{height:14px;background:#fff;border:3px solid var(--ink);border-radius:99px;overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:var(--leaf);transition:width .3s}
+#timer{background:var(--sky);transition:width .1s linear}
+#timer.low{background:var(--coral)}
+#timer.frozen{background:#9adfff}
+.q{font-size:21px;font-weight:800;line-height:1.5;min-height:96px;display:flex;align-items:center}
+.opts{display:flex;flex-direction:column;gap:10px}
+.opt{background:#fff;text-align:left;font-size:17px}
+.opt.right{background:var(--leaf);color:#fff;opacity:1}
+.opt.wrong{background:var(--coral);color:#fff;opacity:1;animation:shake .4s}
+.opt.gone{opacity:.2}
+.combo{text-align:center;font-weight:800;min-height:22px}
+.explain{background:#fff6cf;font-weight:600;line-height:1.6;padding:12px 14px}
+.items{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:auto}
+.items button{font:inherit;font-weight:800;padding:6px 2px;font-size:15px;border:3px solid var(--ink);border-radius:14px;background:#fff;box-shadow:0 3px 0 var(--ink);color:var(--ink);cursor:pointer;line-height:1.2}
+.items button:active:not(:disabled){transform:translateY(3px);box-shadow:none}
+.items button:disabled{opacity:.4}
+.items small{display:block;font-size:11px;font-weight:600}
+@keyframes shake{25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-5px)}}
+.shake{animation:shake .4s}
+.float{position:fixed;transform:translateX(-50%);font-weight:900;font-size:26px;color:var(--ink);text-shadow:0 0 6px #fff,0 0 6px #fff;pointer-events:none;animation:rise .9s ease-out forwards;z-index:20}
+@keyframes rise{to{transform:translate(-50%,-70px);opacity:0}}
+
+/* 結果／商店／成績 */
+.big{font-size:50px;font-weight:900;text-align:center;line-height:1.1}
+.stars{font-size:38px;text-align:center}
+.stat{display:flex;justify-content:space-between;padding:6px 0;font-weight:700;border-bottom:2px dashed rgba(29,43,58,.25)}
+.stat:last-child{border:0}
+input[type=text]{font:inherit;font-weight:700;width:100%;padding:12px;border:3px solid var(--ink);border-radius:14px;background:#fff;color:var(--ink)}
+ol.board{margin:6px 0 0;padding-left:26px;font-weight:700;line-height:2}
+.ach,.shopitem{display:flex;gap:12px;align-items:center;padding:6px 0;font-weight:700}
+.shopitem{border-bottom:2px dashed rgba(29,43,58,.25);padding:10px 0}
+.shopitem:last-child{border:0}
+.shopitem .info{flex:1}
+.ach.lock{opacity:.35;filter:grayscale(1)}
+.ic{font-size:30px}
+small.d{display:block;font-weight:500;opacity:.8}
+.rules{padding-left:22px;margin:8px 0 0}
+.rules li{margin-bottom:8px;line-height:1.6}
+#toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translate(-50%,30px);background:var(--ink);color:#fff;font-weight:700;padding:10px 18px;border-radius:99px;opacity:0;pointer-events:none;transition:.25s;z-index:30;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- 首頁 -->
+  <section id="home" class="screen active">
+    <div class="row between"><span class="coin"><i class="cn"></i> <b id="homeCoin">0</b></span><button class="btn small white" id="soundBtn"></button></div>
+    <div class="title" id="titleBox">
+      <div class="mark" id="mark">🏝️</div>
+      <h1>知識島<br>闖關王</h1>
+      <span class="tag">手機問答闖關</span>
+    </div>
+    <div class="card">
+      <b>選擇難度</b>
+      <div class="seg" id="lvSeg">
+        <button data-lv="easy">簡單<small>20 秒・×1</small></button>
+        <button data-lv="normal">普通<small>15 秒・×2</small></button>
+        <button data-lv="hard">困難<small>12 秒・×3</small></button>
+      </div>
+      <p id="bestTxt" style="margin-top:10px;font-weight:700"></p>
+    </div>
+    <button class="btn" id="startBtn">🚀 開始闖關</button>
+    <button class="btn leaf" id="dailyBtn"></button>
+    <div class="row">
+      <button class="btn sky" id="shopBtn">🛒 商店</button>
+      <button class="btn sky" id="recBtn">🏆 成績</button>
+      <button class="btn sky" id="rulesBtn">📖 說明</button>
+    </div>
+  </section>
+
+  <!-- 玩法說明 -->
+  <section id="rules" class="screen">
+    <h2>📖 玩法說明</h2>
+    <div class="card"><h3>🎯 遊戲目標</h3>
+      <p style="margin-top:6px;line-height:1.6">在 3 顆愛心用完前答對 8 題，登上知識島！分數越高，排名越前面。</p></div>
+    <div class="card"><h3>🕹️ 操作規則</h3>
+      <ol class="rules">
+        <li>每題 4 個選項，點一下就是作答，<b>不能反悔</b>；時間條跑完算答錯。</li>
+        <li>作答後會顯示<b>解說</b>，看完再按「下一題」。</li>
+        <li>答對得分；<b>連續答對</b> 3 題以上有額外分數與金幣。</li>
+        <li>答錯扣 1 顆愛心並讓連擊歸零，愛心歸零就結束。</li>
+        <li>偶爾會出現 <b>⭐幸運題</b>：分數 ×2，再送 3 金幣。</li>
+        <li>題庫有數百題，<b>整個題庫出過一輪前不會重複</b>。</li>
+      </ol></div>
+    <div class="card"><h3>🛒 道具與商店</h3>
+      <ol class="rules">
+        <li>用金幣到商店買道具：💡提示、⏱️加時、⏸️凍結、⚡雙倍、🔄換題、🛡️護盾、❤️愛心、🎽復活甲。</li>
+        <li>遊戲中點下方道具按鈕使用，數字是持有數量；🎽復活甲不用按，愛心歸零時會自動啟動。</li>
+        <li>每一局題目由易到難（★ 越多越難），選項裡藏有陷阱，看清楚再按！</li>
+      </ol></div>
+    <div class="card"><h3>🔓 關卡與每日挑戰</h3>
+      <ol class="rules">
+        <li>通關「簡單」解鎖「普通」，通關「普通」解鎖「困難」。</li>
+        <li>每日挑戰：每天固定 10 題混合難度，每天首次通關有 15 金幣，連續天數會累積。</li>
+        <li>結算後可輸入名字，寫進本機排行榜。</li>
+      </ol></div>
+    <div class="card"><h3>🐣 小提示</h3><p style="margin-top:6px">首頁的小島圖示，好像藏著什麼祕密……</p></div>
+    <button class="btn" data-go="home">← 回首頁</button>
+  </section>
+
+  <!-- 商店 -->
+  <section id="shop" class="screen">
+    <div class="row between"><h2>🛒 道具商店</h2><span class="coin"><i class="cn"></i> <b id="shopCoin">0</b></span></div>
+    <div class="card" id="shopList"></div>
+    <p style="font-weight:600;line-height:1.6">金幣從答對題目、通關獎勵、每日挑戰和彩蛋賺取。</p>
+    <button class="btn" data-go="home">← 回首頁</button>
+  </section>
+
+  <!-- 遊戲區 -->
+  <section id="game" class="screen">
+    <div class="hud">
+      <button class="btn small white" id="quitBtn">✕ 離開</button>
+      <span class="hearts" id="hearts"></span>
+      <span class="coin"><i class="cn"></i> <b id="gCoin">0</b></span>
+    </div>
+    <div class="hud"><span id="qno"></span><span>分數 <b id="gScore">0</b></span></div>
+    <div class="bar"><i id="prog"></i></div>
+    <div class="bar"><i id="timer"></i></div>
+    <div class="card q" id="qcard"><span id="qtext"></span></div>
+    <div class="combo" id="combo"></div>
+    <div class="opts" id="opts"></div>
+    <div class="card explain" id="explain" hidden></div>
+    <button class="btn coral" id="nextBtn" hidden>下一題 ▶</button>
+    <div class="items" id="items"></div>
+  </section>
+
+  <!-- 結算 -->
+  <section id="result" class="screen" style="justify-content:center">
+    <div class="big" id="rTitle"></div>
+    <div class="stars" id="rStars"></div>
+    <div class="card">
+      <div class="stat"><span>模式</span><span id="rLv"></span></div>
+      <div class="stat"><span>總分</span><span id="rScore"></span></div>
+      <div class="stat"><span>答對題數</span><span id="rOk"></span></div>
+      <div class="stat"><span>最高連擊</span><span id="rCombo"></span></div>
+      <div class="stat"><span>本局金幣</span><span id="rCoin"></span></div>
+    </div>
+    <div class="card"><b>寫入本機排行榜</b>
+      <div class="row" style="margin-top:10px"><input type="text" id="nameIn" maxlength="8" placeholder="輸入名字" style="flex:2"><button class="btn small" id="saveBtn" style="flex:1">儲存</button></div>
+    </div>
+    <button class="btn" id="againBtn">🔁 再玩一次</button>
+    <button class="btn white" data-go="home">🏠 回首頁</button>
+  </section>
+
+  <!-- 成績／成就 -->
+  <section id="records" class="screen">
+    <h2>🏆 我的成績</h2>
+    <div class="card"><h3>最高分</h3><div id="bestList" style="margin-top:6px"></div></div>
+    <div class="card"><h3>本機排行榜 Top 10</h3><ol class="board" id="board"></ol></div>
+    <div class="card"><h3>成就 <small id="achCount"></small></h3><div id="achList"></div></div>
+    <button class="btn" data-go="home">← 回首頁</button>
+    <button class="btn coral" id="resetBtn">🗑️ 清除所有存檔</button>
+  </section>
+</div>
+<div id="toast"></div>
+
+<script>
+/* ===== 題庫：[題目, 正確答案, 錯誤1, 錯誤2, 錯誤3, 解說] =====
+   想換成自己的題目，改這裡就好（每個難度至少 8 題） */
+const Q = {
+  easy: [
+    ["一年有幾個月？","12 個","10 個","11 個","13 個","一年有 12 個月，分成 4 季。"],
+    ["水在標準大氣壓下，幾度會結冰？","0°C","10°C","-10°C","100°C","水在 0°C 結冰、100°C 沸騰（標準大氣壓）。"],
+    ["台灣最高的山是哪一座？","玉山","阿里山","雪山","合歡山","玉山海拔約 3,952 公尺，是台灣第一高峰。"],
+    ["太陽從哪個方向升起？","東方","西方","南方","北方","地球由西向東自轉，所以太陽東升西落。"],
+    ["下列哪一種是哺乳動物？","海豚","鯊魚","章魚","鱸魚","海豚用肺呼吸、胎生哺乳，是哺乳動物；鯊魚和鱸魚是魚類。"],
+    ["地球上面積最大的海洋是？","太平洋","大西洋","印度洋","北冰洋","太平洋約占地球表面積三分之一，是最大的海洋。"],
+    ["3 × 4 等於多少？","12","7","14","10","3 × 4 就是 4 個 3 相加，等於 12。"],
+    ["一個星期有幾天？","7 天","5 天","6 天","8 天","一星期有 7 天。"],
+    ["一天有幾小時？","24 小時","12 小時","48 小時","60 小時","一天 24 小時，地球自轉一圈的時間。"],
+    ["紅綠燈中，綠燈亮起表示什麼？","可以通行","必須停止","準備倒車","可以闖紅燈","綠燈表示可以通行，但仍要注意左右來車。"]
+  ],
+  normal: [
+    ["植物行光合作用時，主要吸收哪種氣體？","二氧化碳","氧氣","氮氣","氫氣","植物吸收二氧化碳，加上水與陽光製造養分，並釋出氧氣。"],
+    ["台灣面積最大的縣市是？","花蓮縣","南投縣","高雄市","屏東縣","花蓮縣面積約 4,600 平方公里，是台灣最大的縣市。"],
+    ["邊長 5 公分的正方形，周長是多少？","20 公分","10 公分","25 公分","15 公分","正方形周長＝邊長 × 4，所以 5 × 4 ＝ 20。"],
+    ["人體最大的器官是？","皮膚","肝臟","大腦","肺","皮膚覆蓋全身，能保護身體、調節體溫。"],
+    ["「春眠不覺曉」是哪位詩人的作品？","孟浩然","李白","杜甫","王維","〈春曉〉是唐代詩人孟浩然的作品。"],
+    ["地球繞太陽一圈約需要多久？","一年","一個月","一天","一星期","地球公轉一圈約 365 天，就是一年。"],
+    ["下列哪個數是質數？","7","9","15","21","質數只能被 1 和自己整除；9、15、21 都能被 3 整除。"],
+    ["聲音無法在哪種環境傳播？","真空","水中","空氣中","金屬中","聲音需要介質才能傳播，真空中沒有介質。"],
+    ["北半球白天最長的節氣是？","夏至","冬至","春分","秋分","夏至（約 6 月 21 日）太陽最偏北，白天最長。"],
+    ["長 6、寬 4 的長方形，面積是多少？","24 平方公分","10 平方公分","20 平方公分","48 平方公分","長方形面積＝長 × 寬，6 × 4 ＝ 24。"]
+  ],
+  hard: [
+    ["光在真空中的速度，約每秒多少公里？","30 萬公里","3 萬公里","300 萬公里","3 千公里","光速約每秒 299,792 公里，近似 30 萬公里。"],
+    ["1 + 2 + 3 + … + 10 等於多少？","55","45","50","60","高斯算法：(1 + 10) × 10 ÷ 2 ＝ 55。"],
+    ["《西遊記》的作者是誰？","吳承恩","羅貫中","施耐庵","曹雪芹","《西遊記》作者是明代的吳承恩；羅貫中寫的是《三國演義》。"],
+    ["元素週期表中，原子序為 1 的元素是？","氫","氦","氧","碳","氫的原子序是 1，也是宇宙中含量最多的元素。"],
+    ["第一次工業革命的代表動力機器是？","蒸汽機","電動機","內燃機","核反應爐","瓦特改良的蒸汽機，推動了第一次工業革命。"],
+    ["2 的 8 次方等於多少？","256","128","512","64","2 的 8 次方 ＝ 2 × 2 × … 共 8 個 2，結果是 256。"],
+    ["太陽系中，哪顆行星的行星環最明顯？","土星","火星","水星","金星","土星環由冰與岩石碎塊組成，是太陽系最明顯的行星環。"],
+    ["DNA 的中文全名是？","去氧核糖核酸","核糖核酸","胺基酸","脂肪酸","DNA 是去氧核糖核酸，攜帶生物的遺傳資訊。"],
+    ["台灣位於哪兩個板塊的交界附近？","歐亞板塊與菲律賓海板塊","北美板塊與太平洋板塊","非洲板塊與南極板塊","印度板塊與南美板塊","兩個板塊互相擠壓，所以台灣多地震、也有高山。"],
+    ["植物行光合作用的場所是？","葉綠體","粒線體","細胞核","液泡","葉綠體含有葉綠素，能吸收光能進行光合作用。"]
+  ]
+};
+/* ===== 擴充題庫：固定種子自動生成，每個人拿到的題庫都相同 =====
+   每題最後一個數字是「難度階層」1～3：一局中會由 1 → 3 遞增出題；
+   選項裡刻意放了「陷阱／誘導」：常見計算錯誤、同類型的混淆項、長得像的答案。 */
+(function(){
+  let s=20261027, T=2;
+  const R=()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+  const ri=(a,b)=>a+Math.floor(R()*(b-a+1));
+  const sh=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+  const seen=new Set();
+  Object.values(Q).forEach(l=>l.forEach(q=>seen.add(q[0]+'|'+q[1])));
+  const add=(lv,q,ans,wr,ex)=>{
+    ans=String(ans); wr=[...new Set(wr.map(String))].filter(w=>w!==ans);
+    const key=q+'|'+ans;
+    if(wr.length<3||seen.has(key)) return false;
+    seen.add(key); Q[lv].push([q,ans,...wr.slice(0,3),ex,T]); return true;
+  };
+  const gen=(n,f)=>{let c=0,t=0;while(c<n&&t++<n*30)if(f())c++;};
+  const near=(n,u='')=>{
+    const c=[1,-1,2,-2,10,-10,5,-5].map(d=>n+d), t=String(n);
+    if(n>=10) c.push(+(t.slice(0,-2)+t[t.length-1]+t[t.length-2]));   /* 個位十位寫反 */
+    if(n>=100) c.push(n+100,n-100);                                   /* 進位／借位忘記處理 */
+    return sh(c.filter(x=>x>=0&&x!==n)).map(x=>x+u);
+  };
+  const num=(lv,q,n,ex,u='')=>add(lv,q,n+u,near(n,u),ex);
+  const numw=(lv,q,n,w,ex,u='')=>add(lv,q,n+u,sh(w.filter(x=>Number.isInteger(x)&&x>0&&x!==n)).map(x=>x+u),ex);
+  /* tr(k,v)：回傳「陷阱選項」，至少放 2 個，其餘從同類答案隨機補 */
+  const tab=(lv,pairs,qf,ef,pool=pairs,tr=()=>[])=>pairs.forEach(([k,v])=>add(lv,qf(k),v,[...tr(k,v).slice(0,2),...sh(pool.map(p=>p[1]))].filter(x=>x!==v),ef(k,v)));
+  const P=t=>t.split(' ').map(x=>x.split(':'));
+  const rev=p=>p.map(([a,b])=>[b,a]);
+  const CAP=P('日本:東京 中國:北京 英國:倫敦 法國:巴黎 德國:柏林 義大利:羅馬 美國:華盛頓特區 韓國:首爾 泰國:曼谷 俄羅斯:莫斯科 越南:河內 菲律賓:馬尼拉 印尼:雅加達 馬來西亞:吉隆坡 印度:新德里 西班牙:馬德里 葡萄牙:里斯本 荷蘭:阿姆斯特丹 瑞士:伯恩 奧地利:維也納 希臘:雅典 加拿大:渥太華 墨西哥:墨西哥城 巴西:巴西利亞 阿根廷:布宜諾斯艾利斯 智利:聖地牙哥 秘魯:利馬 埃及:開羅 肯亞:奈洛比 澳洲:坎培拉 紐西蘭:威靈頓 土耳其:安卡拉 沙烏地阿拉伯:利雅德 瑞典:斯德哥爾摩 挪威:奧斯陸 芬蘭:赫爾辛基 波蘭:華沙 古巴:哈瓦那');
+  const TRC=Object.fromEntries(P('澳洲:雪梨,墨爾本 加拿大:多倫多,溫哥華 巴西:里約熱內盧,聖保羅 瑞士:蘇黎世,日內瓦 土耳其:伊斯坦堡 美國:紐約,洛杉磯 紐西蘭:奧克蘭 印度:孟買 中國:上海 日本:大阪,京都 韓國:釜山 德國:慕尼黑 荷蘭:鹿特丹 義大利:米蘭,威尼斯 西班牙:巴塞隆納 泰國:清邁 印尼:泗水 菲律賓:宿霧 越南:胡志明市 馬來西亞:檳城 俄羅斯:聖彼得堡 奧地利:薩爾茨堡 沙烏地阿拉伯:麥加,吉達 墨西哥:坎昆 阿根廷:科爾多瓦 埃及:亞歷山卓 英國:曼徹斯特,愛丁堡 法國:里昂,馬賽').map(([k,v])=>[k,v.split(',')]));
+  const CT=['日本 中國 韓國 泰國 越南 菲律賓 印尼 馬來西亞 印度 土耳其 沙烏地阿拉伯','英國 法國 德國 義大利 西班牙 葡萄牙 荷蘭 瑞士 奧地利 希臘 俄羅斯 瑞典 挪威 芬蘭 波蘭','美國 加拿大 墨西哥 巴西 阿根廷 智利 秘魯 古巴','埃及 肯亞 澳洲 紐西蘭'].map(x=>x.split(' '));
+  const cont=c=>CT.findIndex(g=>g.includes(c));
+  const EL=P('氫:H 氦:He 碳:C 氮:N 氧:O 氖:Ne 鈉:Na 鎂:Mg 鋁:Al 矽:Si 磷:P 硫:S 氯:Cl 鉀:K 鈣:Ca 鐵:Fe 銅:Cu 鋅:Zn 銀:Ag 金:Au 汞:Hg 鉛:Pb 碘:I 錫:Sn');
+  const ANI=sh(P('海豚:哺乳類 鯨魚:哺乳類 蝙蝠:哺乳類 袋鼠:哺乳類 無尾熊:哺乳類 大象:哺乳類 老虎:哺乳類 長頸鹿:哺乳類 貓熊:哺乳類 猴子:哺乳類 企鵝:鳥類 老鷹:鳥類 鴕鳥:鳥類 鸚鵡:鳥類 麻雀:鳥類 貓頭鷹:鳥類 燕子:鳥類 鴨子:鳥類 鯊魚:魚類 鮭魚:魚類 海馬:魚類 鯉魚:魚類 鰻魚:魚類 烏龜:爬蟲類 鱷魚:爬蟲類 蜥蜴:爬蟲類 蛇:爬蟲類 變色龍:爬蟲類 青蛙:兩生類 蠑螈:兩生類 蟾蜍:兩生類 樹蛙:兩生類'));
+  const ANT=Object.fromEntries(P('海豚:魚類 鯨魚:魚類 企鵝:魚類 蝙蝠:鳥類 海馬:哺乳類 鴕鳥:哺乳類 蠑螈:爬蟲類 蟾蜍:爬蟲類 蜥蜴:兩生類 烏龜:兩生類 鱷魚:兩生類 鴨子:兩生類'));
+  const TW=P('宜蘭縣:宜蘭市 花蓮縣:花蓮市 台東縣:台東市 屏東縣:屏東市 南投縣:南投市 彰化縣:彰化市 雲林縣:斗六市 嘉義縣:太保市 苗栗縣:苗栗市 新竹縣:竹北市 澎湖縣:馬公市 金門縣:金城鎮 連江縣:南竿鄉');
+  const TWT=Object.fromEntries(P('宜蘭縣:羅東鎮 花蓮縣:吉安鄉 屏東縣:潮州鎮 南投縣:埔里鎮 彰化縣:員林市 雲林縣:虎尾鎮 嘉義縣:嘉義市 苗栗縣:頭份市 新竹縣:新竹市 台東縣:成功鎮 金門縣:金湖鎮 連江縣:北竿鄉'));
+  const EN=P('apple:蘋果 banana:香蕉 orange:橘子 dog:狗 cat:貓 book:書 pencil:鉛筆 desk:書桌 water:水 school:學校 teacher:老師 student:學生 friend:朋友 family:家庭 house:房子 car:汽車 bus:公車 train:火車 bike:腳踏車 red:紅色 blue:藍色 green:綠色 yellow:黃色 happy:快樂的 sad:傷心的 big:大的 small:小的 hot:熱的 cold:冷的 mother:媽媽 father:爸爸 sister:姊妹 brother:兄弟 morning:早晨 night:夜晚 sun:太陽 moon:月亮 star:星星 rain:雨 snow:雪 wind:風 tree:樹 flower:花 bird:鳥 fish:魚 milk:牛奶 bread:麵包 rice:米飯 egg:蛋 chicken:雞肉 beef:牛肉 library:圖書館 hospital:醫院 airport:機場 kitchen:廚房 bedroom:臥室 computer:電腦 phone:電話 window:窗戶 door:門');
+  const ENZ=Object.fromEntries(EN);
+  const GR=['red blue green yellow','mother father sister brother friend family','school library hospital airport kitchen bedroom house','apple banana orange milk bread rice egg chicken beef','sun moon star rain snow wind','dog cat bird fish','bus car train bike','hot cold big small happy sad','book pencil desk computer phone window door teacher student','morning night water tree flower'].map(x=>x.split(' '));
+  const grp=w=>GR.findIndex(g=>g.includes(w));
+  const PO=P('靜夜思:李白 春曉:孟浩然 登鸛雀樓:王之渙 詠鵝:駱賓王 憫農:李紳 楓橋夜泊:張繼 遊子吟:孟郊 江雪:柳宗元 登高:杜甫 春望:杜甫 山居秋暝:王維 相思:王維 清明:杜牧 水調歌頭:蘇軾 登飛來峰:王安石 示兒:陸游 早發白帝城:李白 泊船瓜洲:王安石');
+  const SONG=['陸游','蘇軾','王安石'], poets=[...new Set(PO.map(p=>p[1]))];
+  const PL=['水星','金星','地球','火星','木星','土星','天王星','海王星'];
+  const poTr=(k,v)=>sh(poets.filter(p=>p!==v&&SONG.includes(p)===SONG.includes(v)));
+  const capTr=k=>[...(TRC[k]||[]),...sh(CAP.filter(p=>cont(p[0])===cont(k)&&p[0]!==k).map(p=>p[1]))];
+  const capRev=(k,v)=>[...(v==='澳洲'?['奧地利']:v==='奧地利'?['澳洲']:[]),...sh(CAP.filter(p=>cont(p[0])===cont(v)&&p[0]!==v).map(p=>p[0]))];
+  const elTr=(k,v)=>sh(EL.filter(e=>e[1]!==v&&e[1][0]===v[0]).map(e=>e[1]));
+  const elRev=(k,v)=>sh(EL.filter(e=>e[1]!==k&&e[1][0]===k[0]).map(e=>e[0]));
+  const enTr=k=>sh(GR[grp(k)].filter(w=>w!==k).map(w=>ENZ[w]));
+  const enRev=(k,v)=>sh(GR[grp(v)].filter(w=>w!==v));
+  const unit=(n,lo,hi,m,a,b)=>gen(n,()=>{const k=ri(lo,hi),v=k*m;return numw('easy',`${k} ${a}等於幾${b}？`,v,[v*10,v/10,(k+1)*m,(k-1)*m,v+10],`1 ${a}＝ ${m} ${b}，所以 ${k} ${a}＝ ${v} ${b}。`,' '+b)});
+  const fmt=x=>(Math.floor(x/60)%12||12)+':'+String(x%60).padStart(2,'0');
+  const capQ=[k=>`${k}的首都是哪裡？`,(k,v)=>`${k}的首都是${v}。`];
+
+  /* ======== 簡單 ======== */
+  T=1;
+  ['三角形','四邊形','五邊形','六邊形','七邊形','八邊形','九邊形','十邊形'].forEach((p,i)=>num('easy',`${p}有幾條邊？`,i+3,`${p}有 ${i+3} 條邊。`,' 條'));
+  gen(25,()=>{const a=ri(2,9),b=ri(2,9),n=a*b;return numw('easy',`${a} × ${b} = ？`,n,[n+a,n-a,n+b,n-b,n+10,n-10],`${a} × ${b} ＝ ${n}。`)});
+  gen(15,()=>{const a=ri(11,44),b=ri(11,44);return a%10+b%10<10&&num('easy',`${a} + ${b} = ？`,a+b,`${a} + ${b} ＝ ${a+b}。`)});
+  tab('easy',EN,k=>`英文單字「${k}」是什麼意思？`,(k,v)=>`${k} 的中文是「${v}」。`,EN,enTr);
+  unit(12,2,20,100,'公尺','公分'); unit(12,2,12,60,'小時','分鐘');
+  T=2;
+  tab('easy',ANI.slice(0,20),k=>`「${k}」屬於哪一類動物？`,(k,v)=>`${k}屬於${v}。`,ANI,k=>ANT[k]?[ANT[k]]:[]);
+  tab('easy',CAP.slice(0,10),capQ[0],capQ[1],CAP,capTr);
+  gen(15,()=>{const a=ri(31,99),b=ri(11,a-5);return a%10>=b%10&&num('easy',`${a} − ${b} = ？`,a-b,`${a} − ${b} ＝ ${a-b}。`)});
+  unit(12,2,15,1000,'公斤','公克'); unit(12,2,9,1000,'公里','公尺');
+  T=3;
+  gen(15,()=>{const a=ri(25,89),b=ri(25,89);return a%10+b%10>=10&&num('easy',`${a} + ${b} = ？`,a+b,`${a} + ${b} ＝ ${a+b}（個位相加要進位）。`)});
+  gen(15,()=>{const a=ri(31,99),b=ri(12,a-5);return b%10>a%10&&num('easy',`${a} − ${b} = ？`,a-b,`${a} − ${b} ＝ ${a-b}（個位不夠減要借位）。`)});
+
+  /* ======== 普通 ======== */
+  T=1;
+  gen(25,()=>{const b=ri(3,9),c=ri(3,12),a=b*c;return numw('normal',`${a} ÷ ${b} = ？`,c,[c+1,c-1,a-b,b+c,c*2],`${b} × ${c} ＝ ${a}，所以 ${a} ÷ ${b} ＝ ${c}。`)});
+  gen(12,()=>{const l=ri(5,20),w=ri(3,l-1),n=l*w;return numw('normal',`長 ${l} 公分、寬 ${w} 公分的長方形，面積是多少？`,n,[2*(l+w),l+w,n+l,n-w,n+10],`面積＝長 × 寬 ＝ ${l} × ${w} ＝ ${n}。`,' 平方公分')});
+  gen(12,()=>{const l=ri(5,20),w=ri(3,l-1),n=2*(l+w);return numw('normal',`長 ${l} 公分、寬 ${w} 公分的長方形，周長是多少？`,n,[l*w,l+w,n+2,n-2,l*2+w],`周長＝（長 ＋ 寬）× 2 ＝ ${n}。`,' 公分')});
+  PL.forEach((p,i)=>add('normal',`從太陽往外數，第 ${i+1} 顆行星是哪一顆？`,p,PL,'八大行星由內而外依序是水星、金星、地球、火星、木星、土星、天王星、海王星。'));
+  T=2;
+  gen(25,()=>{const a=ri(12,49),b=ri(3,9),n=a*b;return numw('normal',`${a} × ${b} = ？`,n,[a*(b+1),a*(b-1),n+10,n-10,a+b],`${a} × ${b} ＝ ${n}。`)});
+  gen(15,()=>{const b=ri(2,25)*20,p=[10,20,25,50][ri(0,3)],n=b*p/100;return numw('normal',`${b} 的 ${p}% 是多少？`,n,[b-n,b+n,n*2,n+p,n+1,n-1],`${b} × ${p}% ＝ ${b} × ${p} ÷ 100 ＝ ${n}。`)});
+  gen(12,()=>{const b=2*ri(2,10),h=ri(3,15),n=b*h/2;return numw('normal',`底 ${b} 公分、高 ${h} 公分的三角形，面積是多少？`,n,[b*h,b+h,n+b,n-h],`三角形面積＝底 × 高 ÷ 2 ＝ ${b} × ${h} ÷ 2 ＝ ${n}（別忘了除以 2）。`,' 平方公分')});
+  for(let n=11;n<=15;n++) numw('normal',`${n} × ${n} = ？`,n*n,[n*2,n*n+n,n*n-n,n*n+10,n*n-10],`${n} × ${n} ＝ ${n*n}（${n} 的平方，不是 ${n} 的 2 倍）。`);
+  tab('normal',EL,k=>`元素「${k}」的化學符號是？`,(k,v)=>`${k}的化學符號是 ${v}。`,EL,elTr);
+  tab('normal',CAP.slice(10),capQ[0],capQ[1],CAP,capTr);
+  tab('normal',ANI.slice(20),k=>`「${k}」屬於哪一類動物？`,(k,v)=>`${k}屬於${v}。`,ANI,k=>ANT[k]?[ANT[k]]:[]);
+  tab('normal',rev(EN),k=>`「${k}」的英文怎麼說？`,(k,v)=>`「${k}」的英文是 ${v}。`,rev(EN),enRev);
+  tab('normal',PO.slice(0,8),k=>`〈${k}〉的作者是誰？`,(k,v)=>`〈${k}〉是${v}的作品。`,PO,poTr);
+  T=3;
+  for(let n=16;n<=25;n++) numw('normal',`${n} × ${n} = ？`,n*n,[n*2,n*n+n,n*n-n,n*n+10,n*n-10],`${n} × ${n} ＝ ${n*n}（${n} 的平方，不是 ${n} 的 2 倍）。`);
+  gen(15,()=>{const h=ri(1,11),m=ri(0,5)*10,k=ri(25,170),t=h*60+m+k;return add('normal',`現在是 ${fmt(h*60+m)}，再過 ${k} 分鐘是幾點幾分？`,fmt(t),[fmt(t+10),fmt(t-10),fmt(t+60),fmt(t-60)],`${fmt(h*60+m)} 加上 ${k} 分鐘，就是 ${fmt(t)}。`)});
+  for(let n=3;n<=12;n++) numw('normal',`${n} 邊形的內角和是幾度？`,(n-2)*180,[(n-1)*180,(n-3)*180,n*180,(n-2)*90,n*90],`${n} 邊形內角和＝（${n} − 2）× 180° ＝ ${(n-2)*180}°。`,' 度');
+  tab('normal',TW,k=>`${k}的縣政府所在地是哪裡？`,(k,v)=>`${k}的縣政府位於${v}。`,TW,k=>TWT[k]?[TWT[k]]:[]);
+
+  /* ======== 困難 ======== */
+  T=1;
+  gen(10,()=>{const a=ri(120,899),b=ri(120,899);return num('hard',`${a} + ${b} = ？`,a+b,`${a} + ${b} ＝ ${a+b}。`)});
+  gen(10,()=>{const a=ri(300,999),b=ri(120,a-50);return num('hard',`${a} − ${b} = ？`,a-b,`${a} − ${b} ＝ ${a-b}。`)});
+  [[2,5,12],[3,3,7],[5,2,5]].forEach(([b,lo,hi])=>{for(let e=lo;e<=hi;e++) numw('hard',`${b} 的 ${e} 次方等於多少？`,b**e,[b**(e-1),b**(e+1),b*e,b**e+b],`${b} 的 ${e} 次方 ＝ ${b**e}（不是 ${b} × ${e}）。`)});
+  [6,7,8,9,12,13,14,15,16,17,18,19].forEach(m=>{const k=ri(5,20),n=m*k;numw('hard',`下列哪個數是 ${m} 的倍數？`,n,[n+1,n-1,n+2,n-2,n+m+1],`${m} × ${k} ＝ ${n}，所以 ${n} 是 ${m} 的倍數。`)});
+  T=2;
+  gen(20,()=>{const a=ri(12,49),b=ri(12,49),n=a*b;return numw('hard',`${a} × ${b} = ？`,n,[n+10,n-10,n+b,n-a,a+b],`${a} × ${b} ＝ ${n}。`)});
+  gen(15,()=>{const n=ri(12,30);return numw('hard',`√${n*n} 等於多少？`,n,[n+1,n-1,n+2,n*2,n*n/2],`${n} × ${n} ＝ ${n*n}，所以 √${n*n} ＝ ${n}（不是除以 2）。`)});
+  gen(15,()=>{const a=ri(2,20),d=ri(2,9),n=a+4*d;return numw('hard',`數列：${a}、${a+d}、${a+2*d}、${a+3*d}、？ 下一項是多少？`,n,[n+1,n-1,n+d,n-d,n+a],`每次增加 ${d}，所以下一項是 ${a+3*d} ＋ ${d} ＝ ${n}。`)});
+  tab('hard',rev(CAP),k=>`${k}是哪個國家的首都？`,(k,v)=>`${k}是${v}的首都。`,rev(CAP),capRev);
+  tab('hard',PO.slice(8),k=>`〈${k}〉的作者是誰？`,(k,v)=>`〈${k}〉是${v}的作品。`,PO,poTr);
+  T=3;
+  gen(20,()=>{const x=ri(2,15),a=ri(2,9),b=ri(1,20),v=a*x+b;return numw('hard',`若 ${a}x + ${b} = ${v}，則 x 等於多少？`,x,[x+1,x-1,v-b,x+a,b,v/a],`${a}x ＝ ${v} − ${b} ＝ ${a*x}，所以 x ＝ ${x}（先減 ${b}，再除以 ${a}）。`)});
+  gen(8,()=>{const a=ri(1,4),r=ri(2,3),t=a*r**3,n=t*r;return numw('hard',`數列：${a}、${a*r}、${a*r*r}、${t}、？ 下一項是多少？`,n,[n+r,n-r,2*t-a*r*r,n+t],`每項都是前一項的 ${r} 倍，所以下一項是 ${t} × ${r} ＝ ${n}（不是加法）。`)});
+  const PQ=[[2,3],[3,4],[2,5],[3,5],[4,5],[3,7],[2,7],[5,7],[4,7],[5,6]];
+  gen(15,()=>{const g=ri(2,12),[p,q]=PQ[ri(0,9)];return numw('hard',`${g*p} 和 ${g*q} 的最大公因數是多少？`,g,[g+1,g-1,g*2,g+2,g*p*q],`${g*p} ＝ ${g} × ${p}，${g*q} ＝ ${g} × ${q}，${p} 和 ${q} 互質，所以最大公因數是 ${g}。`)});
+  gen(10,()=>{const g=ri(2,9),[p,q]=PQ[ri(0,9)],n=g*p*q;return numw('hard',`${g*p} 和 ${g*q} 的最小公倍數是多少？`,n,[g*p*g*q,n+g,g*(p+q),n-g,g],`${g*p} ＝ ${g} × ${p}，${g*q} ＝ ${g} × ${q}，最小公倍數是 ${g} × ${p} × ${q} ＝ ${n}（不是兩數相乘）。`)});
+  tab('hard',rev(EL),k=>`化學符號「${k}」代表哪個元素？`,(k,v)=>`${k} 是元素「${v}」的符號。`,rev(EL),elRev);
+  [20,25,30,40,50,60,80,100].forEach(n=>{const t=n*(n+1)/2;numw('hard',`1 + 2 + 3 + … + ${n} 等於多少？`,t,[t+n,n*(n-1)/2,n*(n+1),n*n/2],`（1 + ${n}）× ${n} ÷ 2 ＝ ${t}（別忘了除以 2）。`)});
+})();
+
+const LV = {
+  easy:{n:'簡單',m:1,t:20}, normal:{n:'普通',m:2,t:15}, hard:{n:'困難',m:3,t:12}, daily:{n:'每日挑戰',m:2,t:15}
+};
+const ITEMS = {
+  hint:{i:'💡',n:'提示',d:'刪掉 2 個錯誤答案',p:3},
+  time:{i:'⏱️',n:'加時',d:'本題時間 +10 秒',p:4},
+  freeze:{i:'⏸️',n:'凍結',d:'本題時間暫停，慢慢想',p:7},
+  double:{i:'⚡',n:'雙倍',d:'本題答對分數 ×2（答錯就浪費）',p:5},
+  swap:{i:'🔄',n:'換題',d:'換成另一題同等級的題目',p:5},
+  shield:{i:'🛡️',n:'護盾',d:'擋下一次答錯，不扣愛心',p:6},
+  heart:{i:'❤️',n:'愛心',d:'恢復 1 顆愛心',p:8},
+  armor:{i:'🎽',n:'復活甲',d:'愛心歸零時自動復活，並恢復 1 顆愛心',p:15}
+};
+const ACH = {
+  clear:['🏁','闖關成功','完成一次挑戰且愛心沒有歸零'],
+  combo:['🔥','連擊高手','單局連續答對 5 題'],
+  perfect:['💯','全對達人','一局答對全部題目'],
+  hard:['👑','知識島王','通關困難難度'],
+  daily:['📅','每日達人','完成一次每日挑戰'],
+  rich:['💰','小富翁','金幣累積到 50'],
+  shop:['🛒','精打細算','在商店買過道具'],
+  egg:['🐣','彩蛋發現者','找到首頁的隱藏彩蛋']
+};
+
+/* ===== 存檔 ===== */
+const KEY = 'knowledge-island-v2';
+const DEFAULT = () => ({coins:10,best:{easy:0,normal:0,hard:0,daily:0},board:[],ach:{},sound:true,lv:'easy',
+  inv:{hint:1,time:0,freeze:0,double:0,swap:0,shield:0,heart:0,armor:0},clear:{easy:false,normal:false,hard:false},daily:{last:'',streak:0},name:'',seen:{easy:[],normal:[],hard:[]}});
+let S = DEFAULT();
+try{
+  const old = JSON.parse(localStorage.getItem(KEY) || '{}'), d = DEFAULT();
+  S = Object.assign(d, old);
+  ['best','inv','clear','daily','seen'].forEach(k => S[k] = Object.assign(DEFAULT()[k], old[k] || {}));
+}catch(e){}
+const save = () => { try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} };
+
+/* ===== 工具 ===== */
+const $ = id => document.getElementById(id);
+function seeded(seed){ return () => { seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+const shuffle = (a, r=Math.random) => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const pad = n => String(n).padStart(2,'0');
+const dstr = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const today = () => dstr(new Date());
+const yesterday = () => { const d=new Date(); d.setDate(d.getDate()-1); return dstr(d); };
+let toastTimer;
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1900); }
+function addCoins(n){ S.coins+=n; if(S.coins>=50) award('rich'); save(); }
+function award(k){ if(S.ach[k]) return; S.ach[k]=1; save(); setTimeout(()=>toast('🏆 解鎖成就：'+ACH[k][1]),500); }
+
+/* ===== 音效 ===== */
+let ac;
+function beep(f,d=.12,type='sine',delay=0){
+  if(!S.sound) return;
+  try{
+    ac = ac || new (window.AudioContext||window.webkitAudioContext)();
+    const o=ac.createOscillator(), g=ac.createGain(), t=ac.currentTime+delay;
+    o.type=type; o.frequency.value=f; o.connect(g); g.connect(ac.destination);
+    g.gain.setValueAtTime(.15,t); g.gain.exponentialRampToValueAtTime(.001,t+d);
+    o.start(t); o.stop(t+d);
+  }catch(e){}
+}
+const sfx = { tap(){beep(440,.05)}, ok(){beep(660,.1);beep(880,.18,'sine',.1)}, bad(){beep(180,.3,'sawtooth')}, win(){[523,659,784,1047].forEach((f,i)=>beep(f,.2,'triangle',i*.12))}, buy(){beep(988,.08);beep(1319,.15,'sine',.08)} };
+
+/* ===== 畫面切換 ===== */
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active',s.id===id));
+  window.scrollTo(0,0);
+  if(id==='home') renderHome();
+  if(id==='records') renderRecords();
+  if(id==='shop') renderShop();
+}
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{sfx.tap();go(b.dataset.go);});
+
+/* ===== 首頁 ===== */
+const unlocked = lv => lv==='easy' || (lv==='normal' && S.clear.easy) || (lv==='hard' && S.clear.normal);
+function renderHome(){
+  if(!unlocked(S.lv)) S.lv='easy';
+  $('homeCoin').textContent = S.coins;
+  $('soundBtn').textContent = S.sound ? '🔊 音效開' : '🔇 音效關';
+  document.querySelectorAll('#lvSeg button').forEach(b=>{
+    const lv=b.dataset.lv, ok=unlocked(lv);
+    b.classList.toggle('on',lv===S.lv); b.classList.toggle('lock',!ok);
+    b.firstChild.textContent = (ok?'':'🔒 ') + LV[lv].n;
+  });
+  $('bestTxt').textContent = `${LV[S.lv].n}最高分：${S.best[S.lv]}・題庫 ${Q[S.lv].length} 題（已出現 ${S.seen[S.lv].length}）`;
+  const done = S.daily.last===today();
+  $('dailyBtn').textContent = done ? `📅 每日挑戰（今日已完成 ✓・連續 ${S.daily.streak} 天）` : `📅 每日挑戰（通關得 15 金幣・連續 ${S.daily.streak} 天）`;
+}
+document.querySelectorAll('#lvSeg button').forEach(b=>b.onclick=()=>{
+  const lv=b.dataset.lv;
+  if(!unlocked(lv)){ toast(lv==='normal'?'🔒 先通關「簡單」才能解鎖':'🔒 先通關「普通」才能解鎖'); sfx.bad(); return; }
+  S.lv=lv; save(); sfx.tap(); renderHome();
+});
+$('soundBtn').onclick=()=>{S.sound=!S.sound;save();renderHome();sfx.tap();};
+$('rulesBtn').onclick=()=>{sfx.tap();go('rules');};
+$('recBtn').onclick=()=>{sfx.tap();go('records');};
+$('shopBtn').onclick=()=>{sfx.tap();go('shop');};
+$('startBtn').onclick=()=>{sfx.tap();startGame(S.lv);};
+$('dailyBtn').onclick=()=>{sfx.tap();startGame('daily');};
+
+/* 隱藏彩蛋：連點小島 5 下 */
+let eggCount=0, eggTimer;
+$('titleBox').onclick=()=>{
+  const m=$('mark'); m.classList.add('pop'); setTimeout(()=>m.classList.remove('pop'),150);
+  beep(500+eggCount*80,.08);
+  eggCount++; clearTimeout(eggTimer); eggTimer=setTimeout(()=>eggCount=0,1500);
+  if(eggCount>=5){
+    eggCount=0;
+    if(S.ach.egg){ toast('🐣 彩蛋已經領過囉！'); }
+    else{ addCoins(10); award('egg'); toast('🎉 發現隱藏彩蛋！獲得 10 金幣'); sfx.win(); renderHome(); }
+  }
+};
+
+/* ===== 商店 ===== */
+function renderShop(){
+  $('shopCoin').textContent=S.coins;
+  const box=$('shopList'); box.innerHTML='';
+  Object.keys(ITEMS).forEach(k=>{
+    const it=ITEMS[k], row=document.createElement('div'); row.className='shopitem';
+    row.innerHTML='<span class="ic"></span><div class="info"><b></b><small class="d"></small></div><button class="btn small"></button>';
+    row.children[0].textContent=it.i;
+    row.querySelector('b').textContent=`${it.n}（持有 ${S.inv[k]}）`;
+    row.querySelector('small').textContent=it.d;
+    const btn=row.querySelector('button'); btn.textContent=`${it.p} 金幣`; btn.disabled=S.coins<it.p;
+    btn.onclick=()=>{
+      if(S.coins<it.p){ toast('金幣不夠囉'); sfx.bad(); return; }
+      S.coins-=it.p; S.inv[k]++; save(); award('shop'); sfx.buy(); toast(`已購買 ${it.i}${it.n}`); renderShop();
+    };
+    box.appendChild(row);
+  });
+}
+
+/* ===== 遊戲 ===== */
+let g=null;
+const qid=q=>{let h=0;const s=q[0]+q[1];for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return h.toString(36);};
+function markSeen(q){
+  if(g.lv==='daily') return;
+  const a=S.seen[g.lv], id=qid(q);
+  if(!a.includes(id)){ a.push(id); save(); }
+}
+const tierOf=q=>q[6]||2;
+function pickRamp(pool,n){
+  const want=[3,3,2], out=[];
+  [1,2,3].forEach((k,i)=>out.push(...shuffle(pool.filter(q=>tierOf(q)===k)).slice(0,want[i])));
+  if(out.length<n) out.push(...shuffle(pool.filter(q=>!out.includes(q))).slice(0,n-out.length));
+  return out.sort((a,b)=>tierOf(a)-tierOf(b));
+}
+function startGame(lv){
+  let qs;
+  if(lv==='daily'){
+    const r=seeded(parseInt(today().replace(/-/g,''),10));
+    qs=[...shuffle(Q.easy,r).slice(0,3),...shuffle(Q.normal,r).slice(0,4),...shuffle(Q.hard,r).slice(0,3)];
+  }else{
+    const done=new Set(S.seen[lv]);
+    let pool=Q[lv].filter(q=>!done.has(qid(q)));
+    if(pool.length<8){ S.seen[lv]=[]; save(); pool=Q[lv]; toast('🔄 題庫全部出過一輪，重新洗牌！'); }
+    qs=pickRamp(pool,8);
+  }
+  g={lv,qs:qs.map(q=>q.slice()),i:0,lives:3,score:0,combo:0,maxCombo:0,ok:0,earned:0,locked:false,hint:false,shield:false,lucky:false,tm:null,left:0,max:0};
+  buildItems(); go('game'); showQ();
+}
+function buildItems(){
+  const box=$('items'); box.innerHTML='';
+  Object.keys(ITEMS).forEach(k=>{
+    const b=document.createElement('button'); b.id='it-'+k;
+    b.onclick=()=>useItem(k); box.appendChild(b);
+  });
+}
+function updateHud(){
+  $('hearts').textContent='❤️'.repeat(g.lives)+'🤍'.repeat(3-g.lives)+(g.shield?'🛡️':'');
+  $('gScore').textContent=g.score;
+  $('gCoin').textContent=S.coins;
+  $('combo').textContent = (g.dbl?'⚡ 雙倍分數啟動　':'')+(g.lucky ? '⭐ 幸運題！分數 ×2、+3 金幣' : (g.combo>=2 ? `🔥 連擊 ${g.combo}` : ''));
+  Object.keys(ITEMS).forEach(k=>{
+    const b=$('it-'+k); b.innerHTML=ITEMS[k].i+'<small>'+ITEMS[k].n+' ×'+S.inv[k]+'</small>';
+    b.disabled = g.locked;
+  });
+}
+function showQ(){
+  const q=g.qs[g.i]; markSeen(q); g.locked=false; g.hint=false; g.lucky=Math.random()<0.12; g.dbl=false;
+  $('qno').textContent=`第 ${g.i+1} / ${g.qs.length} 題・${'★'.repeat(tierOf(q))}`;
+  $('prog').style.width=(g.i/g.qs.length*100)+'%';
+  $('qtext').textContent=q[0];
+  $('explain').hidden=true; $('nextBtn').hidden=true;
+  const box=$('opts'); box.innerHTML='';
+  shuffle(q.slice(1,5).map((t,i)=>({t,ok:i===0}))).forEach(o=>{
+    const b=document.createElement('button');
+    b.className='btn opt'; b.textContent=o.t; b.dataset.ok=o.ok?'1':'0';
+    b.onclick=()=>answer(b); box.appendChild(b);
+  });
+  updateHud(); startTimer();
+}
+function startTimer(){
+  clearInterval(g.tm); g.frozen=false; g.left=g.max=LV[g.lv].t; tick();
+  g.tm=setInterval(()=>{
+    if(!g.frozen) g.left-=.1;
+    if(g.left<=0){ g.left=0; tick(); answer(null); } else tick();
+  },100);
+}
+function tick(){
+  $('timer').style.width=Math.min(100,g.left/g.max*100)+'%';
+  $('timer').classList.toggle('low',g.left<5&&!g.frozen); $('timer').classList.toggle('frozen',!!g.frozen);
+}
+function floatText(txt,el){
+  const r=el.getBoundingClientRect(), f=document.createElement('div');
+  f.className='float'; f.textContent=txt;
+  f.style.left=(r.left+r.width/2)+'px'; f.style.top=(r.top+r.height/2)+'px';
+  document.body.appendChild(f); setTimeout(()=>f.remove(),900);
+}
+function useItem(k){
+  if(!g||g.locked) return;
+  if(k==='armor'){ toast('🎽 復活甲會在愛心歸零時自動啟動'); return; }
+  if(!S.inv[k]){ toast('道具不足，到商店買吧！'); sfx.bad(); return; }
+  if(k==='hint'){
+    if(g.hint){ toast('這題已經用過提示了'); return; }
+    g.hint=true;
+    shuffle([...document.querySelectorAll('#opts .opt')].filter(b=>b.dataset.ok==='0')).slice(0,2).forEach(b=>{b.classList.add('gone');b.disabled=true;});
+    toast('💡 已刪掉 2 個錯誤答案');
+  }else if(k==='time'){
+    g.left+=10; g.max=Math.max(g.max,g.left); tick(); toast('⏱️ 時間 +10 秒');
+  }else if(k==='shield'){
+    if(g.shield){ toast('護盾已經啟動了'); return; }
+    g.shield=true; toast('🛡️ 護盾啟動！可擋一次答錯');
+  }else if(k==='freeze'){
+    if(g.frozen){ toast('時間已經凍結了'); return; }
+    g.frozen=true; tick(); toast('⏸️ 時間凍結！慢慢想');
+  }else if(k==='double'){
+    if(g.dbl){ toast('雙倍分數已經啟動了'); return; }
+    g.dbl=true; toast('⚡ 這題答對分數 ×2');
+  }else if(k==='swap'){
+    const cur=g.qs[g.i], all=g.lv==='daily'?[...Q.easy,...Q.normal,...Q.hard]:Q[g.lv];
+    let pool=all.filter(q=>!g.qs.includes(q)&&tierOf(q)===tierOf(cur));
+    if(!pool.length) pool=all.filter(q=>!g.qs.includes(q));
+    g.qs[g.i]=pool[Math.floor(Math.random()*pool.length)];
+    clearInterval(g.tm); showQ(); toast('🔄 已換成另一題');
+  }else if(k==='heart'){
+    if(g.lives>=3){ toast('愛心已經是滿的'); return; }
+    g.lives++; toast('❤️ 恢復 1 顆愛心');
+  }
+  S.inv[k]--; save(); sfx.buy(); updateHud();
+}
+function answer(btn){
+  if(!g||g.locked) return;
+  g.locked=true; clearInterval(g.tm);
+  const ok=!!btn && btn.dataset.ok==='1', q=g.qs[g.i];
+  document.querySelectorAll('#opts .opt').forEach(b=>{ b.disabled=true; if(b.dataset.ok==='1') b.classList.add('right'); });
+  const anchor=btn||$('qcard');
+  let note;
+  if(ok){
+    g.combo++; g.ok++; g.maxCombo=Math.max(g.maxCombo,g.combo);
+    let gain=10*LV[g.lv].m + (g.combo>=3 ? (g.combo-2)*2 : 0);
+    let coin=g.combo>=3 ? 2 : 1;
+    if(g.lucky){ gain*=2; coin+=3; }
+    if(g.dbl) gain*=2;
+    g.score+=gain; g.earned+=coin; addCoins(coin);
+    floatText(`+${gain}`,anchor); sfx.ok(); note='✅ 答對了！';
+  }else{
+    if(btn) btn.classList.add('wrong'); else toast('⏰ 時間到！');
+    if(g.shield){ g.shield=false; floatText('🛡️',anchor); note='🛡️ 護盾擋下了這次答錯！'; }
+    else{
+      g.lives--; g.combo=0; floatText('💔',anchor); note='❌ 答錯了。';
+      if(g.lives<=0 && S.inv.armor>0){ S.inv.armor--; g.lives=1; save(); note='❌ 答錯了。🎽 復活甲啟動，恢復 1 顆愛心！'; }
+    }
+    $('qcard').classList.remove('shake'); void $('qcard').offsetWidth; $('qcard').classList.add('shake');
+    sfx.bad(); if(navigator.vibrate) try{navigator.vibrate(120)}catch(e){}
+  }
+  const ex=$('explain'); ex.textContent=`${note}　${q[5]}`; ex.hidden=false;
+  const last = g.lives<=0 || g.i>=g.qs.length-1;
+  $('nextBtn').textContent = last ? '🏁 查看結果' : '下一題 ▶'; $('nextBtn').hidden=false;
+  updateHud();
+}
+$('nextBtn').onclick=()=>{
+  if(!g||!g.locked) return; sfx.tap();
+  if(g.lives<=0 || g.i>=g.qs.length-1) finish(); else { g.i++; showQ(); }
+};
+$('quitBtn').onclick=()=>{
+  if(confirm('確定要離開嗎？本局分數不會記錄。')){ clearInterval(g.tm); g=null; go('home'); }
+};
+
+/* ===== 結算 ===== */
+let saved=false;
+function finish(){
+  clearInterval(g.tm);
+  const cleared=g.lives>0, perfect=g.ok===g.qs.length;
+  let bonusMsg='';
+  if(g.score>S.best[g.lv]) S.best[g.lv]=g.score;
+  if(cleared){
+    let bonus=0;
+    if(g.lv==='daily'){
+      if(S.daily.last!==today()){
+        S.daily.streak = S.daily.last===yesterday() ? S.daily.streak+1 : 1;
+        S.daily.last=today(); bonus=15; bonusMsg=`📅 每日獎勵 +15 金幣（連續 ${S.daily.streak} 天）`;
+      }else bonusMsg='今天的每日獎勵已領過囉';
+      award('daily');
+    }else{
+      bonus=LV[g.lv].m*3;
+      if(!S.clear[g.lv]){
+        S.clear[g.lv]=true;
+        if(g.lv==='easy') bonusMsg='🔓 解鎖「普通」難度！';
+        if(g.lv==='normal') bonusMsg='🔓 解鎖「困難」難度！';
+      }
+      if(g.lv==='hard') award('hard');
+    }
+    if(bonus){ g.earned+=bonus; addCoins(bonus); }
+    award('clear');
+  }
+  if(g.maxCombo>=5) award('combo');
+  if(perfect) award('perfect');
+  save();
+  const ratio=g.ok/g.qs.length;
+  $('rTitle').textContent = cleared ? '🎉 闖關成功！' : '💔 挑戰失敗';
+  $('rStars').textContent = ratio>=1?'⭐⭐⭐':ratio>=.75?'⭐⭐☆':ratio>=.5?'⭐☆☆':'☆☆☆';
+  $('rLv').textContent=LV[g.lv].n; $('rScore').textContent=g.score;
+  $('rOk').textContent=`${g.ok} / ${g.qs.length}`; $('rCombo').textContent=g.maxCombo; $('rCoin').textContent='+'+g.earned;
+  saved=false; $('saveBtn').disabled=false; $('saveBtn').textContent='儲存';
+  $('nameIn').value=S.name||'';
+  go('result'); cleared?sfx.win():sfx.bad();
+  if(bonusMsg) setTimeout(()=>toast(bonusMsg),900);
+}
+$('saveBtn').onclick=()=>{
+  if(saved||!g) return;
+  const name=$('nameIn').value.trim()||'無名玩家';
+  S.name=name; S.board.push({name,score:g.score,lv:g.lv});
+  S.board.sort((a,b)=>b.score-a.score); S.board=S.board.slice(0,10); save();
+  saved=true; $('saveBtn').disabled=true; $('saveBtn').textContent='已儲存 ✓'; sfx.ok();
+};
+$('againBtn').onclick=()=>{ sfx.tap(); startGame(g?g.lv:S.lv); };
+
+/* ===== 成績頁 ===== */
+function renderRecords(){
+  const bl=$('bestList'); bl.innerHTML='';
+  Object.keys(LV).forEach(k=>{
+    const d=document.createElement('div'); d.className='stat'; d.innerHTML='<span></span><span></span>';
+    d.children[0].textContent=LV[k].n; d.children[1].textContent=S.best[k]; bl.appendChild(d);
+  });
+  const ol=$('board'); ol.innerHTML='';
+  if(!S.board.length){ const p=document.createElement('p'); p.textContent='還沒有紀錄，快去闖關吧！'; p.style.marginLeft='-22px'; ol.appendChild(p); }
+  S.board.forEach(r=>{ const li=document.createElement('li'); li.textContent=`${r.name}　${r.score} 分（${LV[r.lv].n}）`; ol.appendChild(li); });
+  const al=$('achList'); al.innerHTML=''; let n=0;
+  Object.keys(ACH).forEach(k=>{
+    const a=ACH[k], has=!!S.ach[k]; if(has) n++;
+    const d=document.createElement('div'); d.className='ach'+(has?'':' lock');
+    d.innerHTML='<span class="ic"></span><div><b></b><small class="d"></small></div>';
+    d.children[0].textContent=a[0]; d.querySelector('b').textContent=a[1];
+    d.querySelector('small').textContent=(k==='egg'&&!has)?'？？？':a[2]; al.appendChild(d);
+  });
+  $('achCount').textContent=`${n} / ${Object.keys(ACH).length}`;
+}
+$('resetBtn').onclick=()=>{
+  if(confirm('這會清除金幣、道具、成績、排行榜與成就，確定嗎？')){ S=DEFAULT(); save(); renderRecords(); toast('已清除存檔'); }
+};
+
+renderHome();
+</script>
+</body>
+</html>
